@@ -46,13 +46,10 @@ Create a `.env` file in the root of the project:
 TOGETHER_API_KEY=your_together_api_key_here
 ```
 
-> 🔒 **Important:** Do **not** commit your `.env` file to GitHub. It’s listed in `.gitignore` for safety.
 
 ### 4. Run the Server
 
 ```bash
-node server.js
-# or
 node server.together.js
 ```
 
@@ -91,16 +88,7 @@ This ensures a friendly, interactive, and non-overwhelming user experience.
 
 - 🔍 Ingredient search UI
 - ❤️ Save favorite recipes
-- 🧑‍🍳 Voice command support
 
----
-
-## 🛡️ Security Tip
-
-Always exclude your `.env` file when uploading to GitHub:
-
-- Your `.env` **should not** be committed.
-- It’s already added to `.gitignore` by default.
 
 ---
 
