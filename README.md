@@ -4,9 +4,9 @@ Chef LLaMA is a warm and friendly AI assistant that helps you figure out what to
 
 ## 📸 Screenshots
 
+![Home Screen](https://github.com/SaminRazeghi/CheffLlama/raw/main/public/images/home.png)
 
-[Home Screen](public/image/home.png)
-
+> 📌 **Tip**: If you’re adding more screenshots, keep them in `/public/images/` and follow the same format.
 
 ---
 
