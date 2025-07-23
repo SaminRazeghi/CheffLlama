@@ -3,14 +3,12 @@
 Chef LLaMA is a warm and friendly AI assistant that helps you figure out what to cook using ingredients you already have. Powered by TogetherAI's Mixtral-8x7B model, Chef LLaMA guides you step-by-step through meal suggestions and full recipes.
 
 ## 📸 Screenshots
-![Home Screen](public/images/home.png)
-
 > 📌 **Tip**: Add your screenshots in the `/public/images` folder (or wherever you're serving static assets from), then embed them below like this:
 
-```md
-![Home Screen](public/images/home.png)
-![Suggestions Example](public/images/suggestions.png)
-```
+
+[Home Screen](public/images/home.png)
+[Suggestions Example](public/images/suggestions.png)
+
 
 ---
 
