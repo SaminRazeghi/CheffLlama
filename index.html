@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Chef LLaMA – Offline Demo (Enhanced)</title>
+    <style>
+        /* ---------- layout & theme ---------- */
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #faf8f3 0%, #f0e8e0 100%);
+            color: #3e2723;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #d84315, #bf360c);
+            color: #fff;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 12px rgba(216, 67, 21, 0.3);
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.95;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            background: #66bb6a;
+            border-radius: 50%;
+            animation: pulse-green 2s infinite;
+            box-shadow: 0 0 6px rgba(102, 187, 106, 0.6);
+        }
+
+        @keyframes pulse-green {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.7;
+                transform: scale(1.2);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-left: 0.5rem;
+            color: #ffccbc;
+        }
+
+        #chatContainer {
+            flex: 1;
+            overflow-y: auto;
+            display: none;
+            /* Hidden initially */
+            flex-direction: column-reverse;
+            padding: 1rem 2rem;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(255, 193, 7, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 69, 19, 0.02) 0%, transparent 50%),
+                linear-gradient(135deg, #faf8f3 0%, #f5f0e8 100%);
+        }
+
+        .chat-container-empty {
+            display: none;
+            /* Hidden until after start */
+        }
+
+        #startButtonContainer {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, rgba(255, 248, 225, 0.8) 0%, rgba(245, 240, 232, 0.8) 100%);
+            animation: bgPulse 8s infinite ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes bgPulse {
+            0% {
+                background-position: 0% 0%;
+            }
+
+            50% {
+                background-position: 100% 100%;
+            }
+
+            100% {
+                background-position: 0% 0%;
+            }
+        }
+
+        .greeting {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #d84315;
+            text-align: center;
+            margin-bottom: 1rem;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .emoji-top {
+            font-size: 4rem;
+            color: #d84315;
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-20px);
+            }
+
+            60% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        #startButton {
+            padding: 1.5rem 3rem;
+            background: linear-gradient(135deg, #ffc107, #ffb300);
+            border: none;
+            border-radius: 35px;
+            color: #3e2723;
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 700;
+            text-transform: uppercase;
+            box-shadow: 0 6px 15px rgba(255, 193, 7, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #startButton::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        #startButton:hover::after {
+            width: 200px;
+            height: 200px;
+        }
+
+        #startButton:hover {
+            background: linear-gradient(135deg, #ffb300, #ffa000);
+            transform: translateY(-6px);
+            box-shadow: 0 10px 25px rgba(255, 193, 7, 0.6);
+        }
+
+        #startButton:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+        }
+
+        #inputArea {
+            display: none;
+            /* Hidden initially */
+            padding: 1rem;
+            background: linear-gradient(135deg, #fff, #fafafa);
+            border-top: 1px solid #d7ccc8;
+            box-shadow: 0 -2px 12px rgba(62, 39, 35, 0.08);
+            gap: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        input {
+            width: 100%;
+            padding: .8rem 1rem;
+            border: 2px solid #d7ccc8;
+            border-radius: 25px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            background: #fafafa;
+            color: #3e2723;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #ffc107;
+            background: #fff;
+            box-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
+        }
+
+        input::placeholder {
+            color: #8d6e63;
+        }
+
+        .input-counter {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8rem;
+            color: #8d6e63;
+            pointer-events: none;
+        }
+
+        button {
+            padding: .8rem 1.2rem;
+            background: linear-gradient(135deg, #ffc107, #ffb300);
+            border: none;
+            border-radius: 25px;
+            color: #3e2723;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            min-width: 80px;
+            box-shadow: 0 2px 6px rgba(255, 193, 7, 0.3);
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #ffb300, #ffa000);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 193, 7, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .mic-button {
+            min-width: 50px;
+            font-size: 1.2rem;
+        }
+
+        .mic-button.recording {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+            animation: pulse-red 1s infinite;
+        }
+
+        .mute-button {
+            min-width: 50px;
+            font-size: 1.2rem;
+        }
+
+        .mute-button.muted {
+            background: linear-gradient(135deg, #455a64, #263238);
+            color: white;
+        }
+
+        @keyframes pulse-red {
+            0% {
+                box-shadow: 0 2px 6px rgba(244, 67, 54, 0.3);
+                transform: scale(1);
+            }
+
+            50% {
+                box-shadow: 0 6px 20px rgba(244, 67, 54, 0.6);
+                transform: scale(1.05);
+            }
+
+            100% {
+                box-shadow: 0 2px 6px rgba(244, 67, 54, 0.3);
+                transform: scale(1);
+            }
+        }
+
+        /* Footer styles */
+        footer {
+            background: linear-gradient(135deg, #efebe9, #d7ccc8);
+            padding: 1rem 2rem;
+            border-top: 1px solid #bcaaa4;
+            font-size: 0.85rem;
+            color: #5d4037;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .footer-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .footer-link {
+            color: #d84315;
+            text-decoration: none;
+            transition: color 0.2s ease;
+            font-weight: 500;
+        }
+
+        .footer-link:hover {
+            color: #bf360c;
+            text-decoration: underline;
+        }
+
+        .version-badge {
+            background: #bcaaa4;
+            color: #fff;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* ---------- chat bubbles ---------- */
+        .chat-bubble {
+            max-width: 50%;
+            padding: .5rem .75rem;
+            border-radius: 15px;
+            margin: .3rem 0;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            font-size: .95rem;
+            min-height: auto;
+            width: fit-content
+        }
+
+        .bot-message-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin: .3rem 0;
+        }
+
+        .bot {
+            background: linear-gradient(135deg, #fff8e1, #fff3c4);
+            border: 1px solid #ffcc02;
+            max-width: 50%;
+            padding: .5rem .75rem;
+            border-radius: 18px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            font-size: .95rem;
+            min-height: auto;
+            width: fit-content;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            margin: 0;
+            color: #3e2723;
+            box-shadow: 0 2px 6px rgba(255, 193, 7, 0.2);
+        }
+
+        .spinner-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            justify-content: center;
+            min-height: 2rem;
+        }
+
+        .user {
+            background: linear-gradient(135deg, #d84315, #bf360c);
+            color: #fff;
+            align-self: flex-end;
+            min-height: auto;
+            box-shadow: 0 2px 6px rgba(216, 67, 21, 0.3);
+        }
+
+        /* ---------- spinners ---------- */
+        #spinnerWrapper {
+            display: flex;
+            gap: .5rem;
+            margin-right: 1rem;
+            align-items: center
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: none
+        }
+
+        .thinking {
+            border: 3px dotted #d84315;
+            animation: spin 1s linear infinite
+        }
+
+        .speaking {
+            background: #ffc107;
+            animation: pulse .6s ease-in-out infinite;
+            box-shadow: 0 0 8px rgba(255, 193, 7, 0.6);
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1)
+            }
+
+            50% {
+                transform: scale(.7)
+            }
+
+            to {
+                transform: scale(1)
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+            }
+
+            .header-right {
+                justify-content: center;
+            }
+
+            #chatContainer {
+                padding: 0.5rem 1rem;
+            }
+
+            .suggestions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            footer {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.5rem;
+            }
+
+            .footer-right {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            #startButton {
+                padding: 1.2rem 2.5rem;
+                font-size: 1.5rem;
+            }
+
+            .emoji-top {
+                font-size: 3rem;
+            }
+
+            #inputArea {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .greeting {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="header-left">
+            <h1>🍳 Chef LLaMA</h1>
+            <span class="subtitle">Your AI Cooking Assistant</span>
+        </div>
+        <div class="header-right">
+            <div class="status-indicator"></div>
+            <span>Demo Mode</span>
+        </div>
+    </header>
+
+    <div id="startButtonContainer">
+        <div class="greeting">Good afternoon, my chef friend! 🌞</div>
+        <div class="emoji-top">🍳</div>
+        <button id="startButton">Start</button>
+    </div>
+
+    <div id="chatContainer">
+        <div class="chat-container-empty" id="welcomeMessage">
+            <div class="welcome-message">👋 Welcome to Chef LLaMA!</div>
+            <p>Tell me what ingredients you have, and I'll suggest delicious recipes you can make!</p>
+            <div class="suggestions">
+                <div class="suggestion-chip">🍗 Chicken & Veggies</div>
+                <div class="suggestion-chip">⚡ Quick Meals</div>
+                <div class="suggestion-chip">🍝 Pasta Dishes</div>
+                <div class="suggestion-chip">🥗 Healthy Options</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="inputArea">
+        <div class="input-wrapper">
+            <input id="textInput" type="text"
+                placeholder="Tell me what ingredients you have, or ask for recipe ideas..." maxlength="200" />
+            <span class="input-counter" id="charCounter">0/200</span>
+        </div>
+        <button id="sendBtn">Send</button>
+        <button id="micBtn" class="mic-button" title="Start voice input">🎤</button>
+        <button id="muteBtn" class="mute-button" title="Mute voice output">🔇</button>
+    </div>
+
+    <footer>
+        <div class="footer-left">
+            <span>© 2025 Chef LLaMA</span>
+            <span class="version-badge">v2.1.0</span>
+        </div>
+        <div class="footer-right">
+            <a href="#" class="footer-link">About</a>
+            <a href="#" class="footer-link">Privacy</a>
+            <a href="#" class="footer-link">Support</a>
+            <span>Made with ❤️ for food lovers</span>
+        </div>
+    </footer>
+
+    <script>
+        /* ------------------------- enhanced features ----------------- */
+        let conversationHistory = [];
+        let messageCount = 0;
+        let activeBubble = null;
+        let typeTimer = null;
+        let utterance = null;
+        let recognition = null;
+        let isRecording = false;
+        let voiceEnabled = true;
+
+        // --- real LLaMA integration ---
+        // tiny sleep helper for “thinking” delay
+        function sleep(ms) {
+            return new Promise(res => setTimeout(res, ms));
+        }
+
+        // call the Express backend that already talks to Together AI
+        async function getRealReply(userText) {
+            try {
+                const res = await fetch('/api/suggest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        input: userText,
+                        history: conversationHistory // 📨 send what we’ve collected so far
+                    })
+                });
+
+                const data = await res.json();
+
+                // ✅ CRITICAL: Replace the local history with the updated one from backend
+                if (Array.isArray(data.history)) {
+                    conversationHistory = data.history;
+                    console.log("✅ Updated history from backend:", conversationHistory);
+                }
+
+                return data.reply || 'No response from Chef LLaMA.';
+            } catch (err) {
+                console.error('Server error:', err);
+                return 'Chef LLaMA burned the toast. Please try again later!';
+            }
+        }
+
+        function handleSuggestion(text) {
+            document.getElementById('textInput').value = text;
+            handleUserInput();
+        }
+
+        function updateCharCounter() {
+            const input = document.getElementById('textInput');
+            const counter = document.getElementById('charCounter');
+            const length = input.value.length;
+            counter.textContent = `${length}/200`;
+
+            if (length > 180) {
+                counter.style.color = '#f44336';
+            } else if (length > 150) {
+                counter.style.color = '#ff9800';
+            } else {
+                counter.style.color = '#8d6e63';
+            }
+        }
+
+        function hideWelcomeMessage() {
+            const welcome = document.getElementById('welcomeMessage');
+            if (welcome) {
+                welcome.style.display = 'none';
+            }
+        }
+
+        // Set greeting based on current time
+        function setGreeting() {
+            const now = new Date();
+            const hour = now.getHours();
+            let greetingText = '';
+            if (hour < 12) {
+                greetingText = 'Good morning, my chef friend! 🌞';
+            } else if (hour < 18) {
+                greetingText = 'Good afternoon, my chef friend! 🌞';
+            } else {
+                greetingText = 'Good night, my chef friend! 🌙';
+            }
+            document.querySelector('.greeting').textContent = greetingText;
+        }
+
+        /* ------------------------- voice input ------------------------- */
+        // Initialize speech recognition if available
+        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onresult = (e) => {
+                const transcript = e.results[0][0].transcript;
+                document.getElementById('textInput').value = transcript;
+                updateCharCounter();
+            };
+
+            recognition.onerror = (e) => {
+                console.log('Speech recognition error:', e.error);
+                stopRecording();
+            };
+
+            recognition.onend = () => {
+                if (isRecording) {
+                    stopRecording();
+                }
+            };
+        }
+
+        function startRecording() {
+            if (!voiceEnabled || !recognition) {
+                if (!recognition) alert('Speech recognition not supported in this browser.');
+                return;
+            }
+
+            isRecording = true;
+            const micBtn = document.getElementById('micBtn');
+            micBtn.classList.add('recording');
+            micBtn.title = 'Stop voice input';
+            recognition.start();
+        }
+
+        function stopRecording() {
+            if (!recognition) return;
+
+            isRecording = false;
+            const micBtn = document.getElementById('micBtn');
+            micBtn.classList.remove('recording');
+            micBtn.title = 'Start voice input';
+            recognition.stop();
+        }
+
+        /* ------------------------- chat flow -------------------------- */
+        function handleUserInput(text) {
+            // when called from button, grab textbox value
+            if (text === undefined) {
+                const box = document.getElementById('textInput');
+                text = box.value.trim();
+                box.value = '';
+                updateCharCounter();
+            }
+            if (!text) return;
+
+            // Hide welcome message after first interaction
+            hideWelcomeMessage();
+            messageCount++;
+
+            // Stop any ongoing speech/typing
+            stopSpeech();
+
+            conversationHistory.push({ role: 'user', content: text });
+
+            addBubble(text, 'user');
+            respond(text);
+        }
+
+        async function respond(text) {
+            showSpinner("thinking");
+            await sleep(800);
+            hideSpinner("thinking");
+
+            const reply = await getRealReply(text);
+
+            // Split by step indicators or pause prompts
+            const parts = reply.split(/(?=\bStep \d+|Ready for the next step\?|Would you like me to continue)/i);
+
+            // If it's a normal message (not a recipe flow)
+            if (parts.length === 1) {
+                addBubble("", "bot");
+                showSpinner("speaking");
+                startTyping(reply);
+                return;
+            }
+
+            // Handle ingredient intro + steps (like a mini state machine)
+            let index = 0;
+            async function showNextPart() {
+                if (index >= parts.length) return;
+
+                const segment = parts[index++].trim();
+                if (!segment) return showNextPart();
+
+                addBubble("", "bot");
+                showSpinner("speaking");
+                startTyping(segment);
+
+                // Wait for user confirmation before proceeding
+                const interval = setInterval(() => {
+                    const last = conversationHistory[conversationHistory.length - 1];
+                    if (last && last.role === "user" && /\b(yes|ok|next|go|sure|continue)\b/i.test(last.content)) {
+                        clearInterval(interval);
+                        showNextPart();
+                    }
+                }, 1000);
+            }
+
+            showNextPart();
+        }
+
+        /* ------------------------- bubble helpers --------------------- */
+        function addBubble(text, who) {
+            if (who === 'bot') {
+                // Create container for bot message with spinner next to it
+                const messageContainer = document.createElement('div');
+                messageContainer.className = 'bot-message-container';
+
+                // Create spinner wrapper next to the bubble
+                const spinnerDiv = document.createElement('div');
+                spinnerDiv.className = 'spinner-wrapper';
+                spinnerDiv.innerHTML = `
+                    <div class="spinner thinking" id="botThinkingSpinner"></div>
+                    <div class="spinner speaking" id="botSpeakingSpinner"></div>
+                `;
+
+                // Create the actual chat bubble
+                const bubble = document.createElement('div');
+                bubble.className = 'chat-bubble bot';
+                bubble.textContent = text;
+
+                // Assemble: spinner next to bubble
+                messageContainer.appendChild(spinnerDiv);
+                messageContainer.appendChild(bubble);
+
+                // Insert at the beginning for reverse order
+                const container = document.getElementById('chatContainer');
+                container.insertBefore(messageContainer, container.firstChild);
+
+                activeBubble = bubble; // Set active bubble to the bubble itself
+            } else {
+                // User messages remain simple
+                const bubble = document.createElement('div');
+                bubble.className = `chat-bubble ${who}`;
+                bubble.textContent = text;
+
+                // Insert at the beginning for reverse order
+                const container = document.getElementById('chatContainer');
+                container.insertBefore(bubble, container.firstChild);
+            }
+        }
+
+        /* ------------------------- type + speech ---------------------- */
+        function startTyping(text) {
+            if (!activeBubble) return;
+
+            activeBubble.textContent = '';
+            let idx = 0;
+
+            // Start speech immediately but at a slower rate to sync with typing
+            if (voiceEnabled && speechSynthesis && speechSynthesis.getVoices().length > 0) {
+                speakTextSynced(text);
+            }
+
+            typeTimer = setInterval(() => {
+                if (idx < text.length && activeBubble) {
+                    activeBubble.textContent += text[idx];
+                    activeBubble.style.height = 'auto';
+                    idx++;
+                } else {
+                    clearInterval(typeTimer);
+                    typeTimer = null;
+                    hideSpinner('speaking');
+                    activeBubble = null;
+                }
+            }, 50); // Slower typing to match speech pace
+        }
+
+        function speakTextSynced(text) {
+            try {
+                utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-GB';
+                utterance.rate = 0.90;
+                utterance.pitch = 1.0;
+
+                const voices = speechSynthesis.getVoices();
+                const voice = voices.find(v =>
+                    v.name.includes('Female') ||
+                    v.name.includes('Google') ||
+                    v.lang.includes('en')
+                );
+                if (voice) utterance.voice = voice;
+
+                utterance.onend = () => {
+                    // Speech finished
+                };
+
+                utterance.onerror = (e) => {
+                    console.log('Speech error:', e);
+                };
+
+                speechSynthesis.speak(utterance);
+            } catch (e) {
+                console.log('Speech not available:', e);
+            }
+        }
+
+        function stopSpeech() {
+            if (speechSynthesis && speechSynthesis.speaking) {
+                try {
+                    speechSynthesis.cancel();
+                } catch (e) {
+                    console.log('Error stopping speech:', e);
+                }
+            }
+            if (typeTimer) {
+                clearInterval(typeTimer);
+                typeTimer = null;
+            }
+            hideSpinner();
+            activeBubble = null;
+        }
+
+        function stopSpeakingOnly() {
+            if (speechSynthesis && speechSynthesis.speaking) {
+                try {
+                    speechSynthesis.cancel();
+                } catch (e) {
+                    console.log('Error stopping speech:', e);
+                }
+            }
+        }
+
+        /* ------------------------- spinner toggle --------------------- */
+        function showSpinner(mode = '') {
+            const botThinking = document.getElementById('botThinkingSpinner');
+            const botSpeaking = document.getElementById('botSpeakingSpinner');
+
+            if (mode === 'thinking' && botThinking) {
+                botThinking.style.display = 'block';
+            } else if (mode === 'speaking' && botSpeaking) {
+                botSpeaking.style.display = 'block';
+            }
+        }
+
+        function hideSpinner(mode = '') {
+            const botThinking = document.getElementById('botThinkingSpinner');
+            const botSpeaking = document.getElementById('botSpeakingSpinner');
+
+            if (mode === 'thinking' && botThinking) {
+                botThinking.style.display = 'none';
+            } else if (mode === 'speaking' && botSpeaking) {
+                botSpeaking.style.display = 'none';
+            } else if (mode === '') {
+                if (botThinking) botThinking.style.display = 'none';
+                if (botSpeaking) botSpeaking.style.display = 'none';
+            }
+        }
+
+        /* ------------------------- event listeners ------------------- */
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            conversationHistory = [];
+            console.log('Chef LLaMA v2.1.0 loaded and ready!');
+            updateCharCounter();
+            setGreeting(); // Set the greeting based on the current time
+
+            // Add event listeners
+            const startButton = document.getElementById('startButton');
+            const sendBtn = document.getElementById('sendBtn');
+            const micBtn = document.getElementById('micBtn');
+            const muteBtn = document.getElementById('muteBtn');
+            const textInput = document.getElementById('textInput');
+            const suggestionChips = document.querySelectorAll('.suggestion-chip');
+
+            // Start button
+            startButton.addEventListener('click', async () => {
+                startButton.parentElement.style.display = 'none';
+                document.getElementById('chatContainer').style.display = 'flex';
+                document.getElementById('inputArea').style.display = 'flex';
+
+                addBubble("", "bot");
+                showSpinner("speaking");
+                startTyping("Hello! I'm Chef LLaMA, your friendly cooking assistant. I'd be happy to help you figure out what to cook.\n\nFirst, could you tell me what ingredients you have? This will help me suggest some meal ideas for you.");
+
+                // Hide the initial welcome message
+                hideWelcomeMessage();
+            });
+
+            // Send button - FIXED: Use arrow function to avoid passing event object
+            sendBtn.addEventListener('click', () => handleUserInput());
+
+            // Mic button
+            micBtn.addEventListener('click', () => {
+                if (isRecording) {
+                    stopRecording();
+                } else {
+                    startRecording();
+                }
+            });
+
+            // Mute button
+            muteBtn.addEventListener('click', () => {
+                voiceEnabled = !voiceEnabled;
+                const muteBtn = document.getElementById('muteBtn');
+                if (voiceEnabled) {
+                    muteBtn.classList.remove('muted');
+                    muteBtn.title = 'Mute voice output';
+                    muteBtn.textContent = '🔊';
+                } else {
+                    muteBtn.classList.add('muted');
+                    muteBtn.title = 'Unmute voice output';
+                    muteBtn.textContent = '🔇';
+                    stopSpeakingOnly(); // Stop any ongoing speech when muting
+                }
+            });
+
+            // Character counter
+            textInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleUserInput();
+            });
+
+            // Suggestion chips
+            suggestionChips.forEach((chip, index) => {
+                const suggestions = [
+                    'I have chicken and vegetables',
+                    'I want something quick and easy',
+                    'I have pasta and tomatoes',
+                    'I want a healthy breakfast'
+                ];
+                chip.addEventListener('click', () => {
+                    handleSuggestion(suggestions[index]);
+                });
+            });
+
+            // Add startup animation
+            setTimeout(() => {
+                const welcomeMsg = document.querySelector('.welcome-message');
+                if (welcomeMsg) {
+                    welcomeMsg.style.animation = 'fadeIn 0.5s ease-in';
+                }
+            }, 500);
+
+            // Wait for voices to load for speech synthesis
+            if (speechSynthesis) {
+                speechSynthesis.addEventListener('voiceschanged', () => {
+                    console.log('Voices loaded:', speechSynthesis.getVoices().length);
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
